@@ -1,3 +1,3 @@
 You may wonder who I am, maybe there's more than one of us though...
 
-Hi Adam, your hub is gay, suck your mother :) 
+Hi Adam, your hub is gay :) 
