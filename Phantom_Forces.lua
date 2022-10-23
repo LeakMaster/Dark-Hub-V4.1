@@ -4,11 +4,11 @@
         walkspeed when crouched, using upvs
         make mags combine on new ammo pickup
 
-
+        
 
 ]]
 
--- wow adding updates, hehe get fucked 
+-- wow new updates, well get fucked
 
 
 local Client         = {}
@@ -205,6 +205,7 @@ end
     local Functions                     = DarkEnv.GameClient.Functions
     local Tables                        = DarkEnv.GameClient.Tables
     local GameLogic                     = Tables.GameLogic
+    local VelocityBypass
 
     local game                          = game
     local GetService                    = game.GetService
@@ -477,9 +478,13 @@ end
         OldSend(Tables.Network, "newbullets", {
             camerapos   = Camera.CFrame.p, 
             firepos     = HitData.FirePos, 
-            bullets     = BulletTable
-        })
+            bullets     = BulletTable,
+        }, OldGetTime(Tables.Network))
         
+
+    --            OldGetTime(Tables.Network)
+
+    
         for i = 1, #BulletTable do
             BulletTable[i][1]               = BulletVelocity
             BulletsFired[BulletTable[i][2]] = true
@@ -492,6 +497,7 @@ end
         local Closest, HitPart = GetTargetCharacter(math.huge, Client.Toggles.QuickRagebot)
 
         local CurrentGun        = GameLogic.currentgun 
+        
         if Closest and CurrentGun then
             local BulletOrigin = (CurrentGun.barrel) or (CurrentGun.aimsightdata and CurrentGun.aimsightdata[1].sightpart)
             local CurrentData  = CurrentGun.data
@@ -514,7 +520,7 @@ end
                     Player  = Closest;
                     HitPart = HitPart;
                     FirePos = BulletOrigin.Position;
-                }, CurrentData.pelletcount or 1, BulletsNeeded)
+                }, CurrentData.pelletcount or 1, BulletsNeeded, OldGetTime(Tables.Network))
             end
         end
     end
@@ -525,7 +531,7 @@ end
     setreadonly(ParticleModule, false)
     ParticleModule.new = function(Data)
         if checkcaller() then return OldParticle(Data) end
-
+        
         if Client.Toggles.SilentAim then
             local CurrentGun = GameLogic.currentgun
 
@@ -547,13 +553,15 @@ end
         return OldParticle(Data)
     end
     setreadonly(ParticleModule, true)
-
-
-    local VelocityBypass = { CurrentTime = OldGetTime(Tables.Network) }
-
+    task.defer(function()
+       while task.wait() do
+            VelocityBypass = { CurrentTime = OldGetTime(Tables.Network) }
+        end
+    end)
     Tables.Network.send = function(self, Name, ...)
         local Args = { ... }
 
+        
         if Name == "newbullets" then
             if Client.Toggles.SilentAim then 
                 local Bullets = Args[1].bullets
@@ -569,8 +577,8 @@ end
                             Bullets[i][1]   = BulletVelocity
                             BulletsShot     = Bullets[i][2]
                         end
-
-                        OldSend(self, Name, Args[1], "self:getTime()")
+                        
+                        OldSend(self, Name, Args[1], self:getTime())
 
                         --// hit bullets
                         for i = 1, #Bullets do
@@ -678,7 +686,6 @@ end
 
         MemesUpvalues[4] = (Client.Toggles.FireRate and MemesUpvalues[4] + Client.Values.FireRateAddition) or MemesUpvalues[4] -- FireRate
         MemesUpvalues[5] = ( Client.Toggles.AutomaticGuns and { true } ) or MemesUpvalues[5]
-        
         return LoadedGun
     end)
 
@@ -699,13 +706,22 @@ end
         Power = (Client.Toggles.Jumppower and Power + Client.Values.JumppowerValue) or Power
         return OldJump(self, Power)
     end)
-
+    local SMS
     task.spawn(function()
         while true do 
             if Client.Toggles.RageBot then
                 pcall(spawn, KillClosestPlayer)
             end
-            task.wait()
+        SMS = debug.getupvalue(Tables.Character.setsprint, 1)
+           if SMS.currentgun and SMS.currentgun.data then
+               if SMS.currentgun.data.firerate then
+                    task.wait(60 / SMS.currentgun.data.firerate)
+                else
+                    task.wait(60 / SMS.currentgun.data.firerate[1])    
+                end
+             else
+                task.wait(.08)
+           end
         end
     end)
 
