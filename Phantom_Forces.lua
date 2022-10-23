@@ -4,9 +4,11 @@
         walkspeed when crouched, using upvs
         make mags combine on new ammo pickup
 
-        
+
 
 ]]
+
+-- wow adding updates, hehe get fucked 
 
 
 local Client         = {}
